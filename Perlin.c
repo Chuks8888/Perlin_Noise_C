@@ -32,10 +32,8 @@ int generate(int i, int j);
 
 int *permutation; // declare a global permutation array
 
-struct vector Cell[4];
-
-#define Height  300
-#define Width   300
+#define Height  500
+#define Width   500
 int main()
 {
     //srand(time(NULL));
@@ -118,7 +116,7 @@ int main()
 int generate(int i, int j)
 {
     float result = 0.0;
-    int octaves = 4;
+    int octaves = 8;
     float frequency = 0.01;
     float amplitude = 0.7;
 
@@ -138,11 +136,13 @@ float Perlin(float x, float y)
     int Base_x = floor(x);
     int Base_y = floor(y);
 
-    float Point_x = x - floor(x);
-    float Point_y = y - floor(y);
+    float Point_x = x - Base_x;
+    float Point_y = y - Base_y;
 
     Base_x = Base_x & 255;
     Base_y = Base_y & 255;
+
+    struct vector Cell[4];
 
     assign_vector_values(Cell, Point_x, Point_y, Base_x, Base_y);
 
@@ -161,15 +161,12 @@ void assign_vector_values(struct vector temp[], float Point_x, float Point_y, in
     // Iteration:   0 - top right   1 - top left    2 - bottom right    3 - bottom left
     for(int i = 0; i < 4; i++)
     {
-        
         temp[i].distance_vector_x = Point_x - ((i+1) & 1); // for 0 and 2
         temp[i].distance_vector_y = Point_y - (1 - (i&2)/2); // for 0 and 1
-        temp[i].permutation_value = permutation[permutation[Base_x + ((i+1) & 1)] + Base_y + (1 - (i&2)/2)];
-        // same here +1 for X where i is 0 and 2, +1 for Y where 0 and 1
+        temp[i].permutation_value = permutation[permutation[Base_x + ((i+1) & 1)] + Base_y + (1 - (i&2)/2)];// same here +1 for X where i is 0 and 2, +1 for Y where 0 and 1
 
-        int rest = temp[i].permutation_value & 4;
+        int rest = temp[i].permutation_value & 3;
         temp[i].dot_prouct = (-1.0 * (-1.0 + (rest&2)))*temp[i].distance_vector_x + (-1.0 + 2*((rest+1) & 1))*temp[i].distance_vector_y;
-        // -1, -1 for rest = 3, -1, 1 for rest = 2, 1,1 for rest = 1, 1,1 for rest = 0
     }
 }
 
