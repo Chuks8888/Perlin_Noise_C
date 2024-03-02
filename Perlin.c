@@ -32,6 +32,8 @@ int generate(int i, int j);
 
 int *permutation; // declare a global permutation array
 
+struct vector Cell[4];
+
 #define Height  300
 #define Width   300
 int main()
@@ -141,8 +143,6 @@ float Perlin(float x, float y)
 
     Base_x = Base_x & 255;
     Base_y = Base_y & 255;
-    
-    struct vector Cell[4];
 
     assign_vector_values(Cell, Point_x, Point_y, Base_x, Base_y);
 
@@ -158,37 +158,18 @@ float Perlin(float x, float y)
 
 void assign_vector_values(struct vector temp[], float Point_x, float Point_y, int Base_x, int Base_y)
 {
-    temp[0].distance_vector_x = Point_x -1.0;
-    temp[0].distance_vector_y = Point_y -1.0;
-    temp[0].permutation_value = permutation[permutation[Base_x + 1] + Base_y + 1];
-
-    temp[1].distance_vector_x = Point_x;
-    temp[1].distance_vector_y = Point_y - 1.0;
-    temp[1].permutation_value = permutation[permutation[Base_x] + Base_y + 1];
-
-    temp[2].distance_vector_x = Point_x - 1.0;
-    temp[2].distance_vector_y = Point_y; 
-    temp[2].permutation_value = permutation[permutation[Base_x + 1] + Base_y];
-
-    temp[3].distance_vector_x = Point_x;
-    temp[3].distance_vector_y = Point_y;
-    temp[3].permutation_value = permutation[permutation[Base_x] + Base_y];
-
     // Iteration:   0 - top right   1 - top left    2 - bottom right    3 - bottom left
     for(int i = 0; i < 4; i++)
     {
-        int rest = temp[i].permutation_value % 4;
-        if(rest == 0)
-            temp[i].dot_prouct =  temp[i].distance_vector_x + temp[i].distance_vector_y;
+        
+        temp[i].distance_vector_x = Point_x - ((i+1) & 1); // for 0 and 2
+        temp[i].distance_vector_y = Point_y - (1 - (i&2)/2); // for 0 and 1
+        temp[i].permutation_value = permutation[permutation[Base_x + ((i+1) & 1)] + Base_y + (1 - (i&2)/2)];
+        // same here +1 for X where i is 0 and 2, +1 for Y where 0 and 1
 
-        if(rest == 1)
-            temp[i].dot_prouct =  (-1.0 * temp[i].distance_vector_x) + temp[i].distance_vector_y;
-
-        if(rest == 2)
-            temp[i].dot_prouct =  (-1.0 * temp[i].distance_vector_x) + -1.0 * (temp[i].distance_vector_y);
-
-        if(rest == 3)
-            temp[i].dot_prouct =  temp[i].distance_vector_x + (-1.0 * temp[i].distance_vector_y);
+        int rest = temp[i].permutation_value & 4;
+        temp[i].dot_prouct = (-1.0 * (-1.0 + (rest&2)))*temp[i].distance_vector_x + (-1.0 + 2*((rest+1) & 1))*temp[i].distance_vector_y;
+        // -1, -1 for rest = 3, -1, 1 for rest = 2, 1,1 for rest = 1, 1,1 for rest = 0
     }
 }
 
@@ -204,11 +185,13 @@ int* Permutation_maker() // function for creating permutation array
     }
 
     // shuffling of array
-    int random;
-    for(int i = 255; i > 0  ; i--)
+    int random, temp;
+    for(int i = 0; i < 255  ; i++)
     {
-        random = rand()%i;
-        swap(Permutation, i, random);
+        random = rand()% 256;
+        temp = Permutation[i];
+        Permutation[i] = Permutation[random];
+        Permutation[random] = temp;
     }
 
     // fillig the second half of the array
@@ -220,19 +203,10 @@ int* Permutation_maker() // function for creating permutation array
     return Permutation;
 }
 
-void swap(int *table, int i, int j)
-{
-    int temp = table[i];
-    table[i] = table[j];
-    table[j] = temp;
-}
-
-float Fade(float t)
-{
+float Fade(float t){
     return t * t * t *(t * (t * 6.0 - 15.0) + 10.0);
 }
 
-float Lerp(float a, float b, float t)
-{
+float Lerp(float a, float b, float t){
     return a + t*(b-a);
 }
