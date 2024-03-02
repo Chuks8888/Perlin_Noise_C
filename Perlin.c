@@ -2,7 +2,12 @@
 #include <stdlib.h>
 #include <time.h>
 #include <math.h>
-#include <string.h> 
+#include <string.h>
+
+#define STB_IMAGE_IMPLEMENTATION
+#include "stb_image/stb_image.h"
+#define STB_IMAGE_WRITE_IMPLEMENTATION
+#include "stb_image/stb_image_write.h"
 
 struct vector
 {
@@ -11,8 +16,8 @@ struct vector
 
     int permutation_value;
 
-    float gradient_vector_x;
-    float gradient_vector_y;
+    //float gradient_vector_x;
+    //float gradient_vector_y;
 
     float dot_prouct;
 };
@@ -23,40 +28,95 @@ void assign_vector_values(struct vector temp[], float Point_x, float Point_y, in
 float Perlin(float x, float y);
 float Fade(float t);
 float Lerp(float a, float b, float t);
-int generate(int octaves, int i, int j);
+int generate(int i, int j);
 
 int *permutation; // declare a global permutation array
 
-#define Height  500
-#define Width   500
+#define Height  300
+#define Width   300
 int main()
 {
-    srand(time(NULL));
+    //srand(time(NULL));
 
     permutation = Permutation_maker(); // define of the global array
 
     int Numbers[Height][Width];
-    int number_of_iterations = 8;
 
-    FILE *save = fopen("Perlin_noise.txt", "w");
+    // FILE *save = fopen("Perlin_noise.txt", "w");
 
     for(int i = 0; i < Height; i++)
     {
         for(int j = 0; j < Width; j++)
         {
-            Numbers[i][j] = generate(number_of_iterations, i, j);
-            fprintf(save, "%d ", Numbers[i][j]);
+            Numbers[i][j] = generate(j, i);
+            //fprintf(save, "%d ", Numbers[i][j]);
+            if(Numbers[i][j] < 0) Numbers[i][j] = 0;
+            if(Numbers[i][j] > 255) Numbers[i][j] = 255;
         }
-        fprintf(save, "\n");
+        //fprintf(save, "\n");
+    }
+    free(permutation);
+    // fclose(save);
+
+    int width, height, channels;
+    unsigned char *img = stbi_load("DO_NOT_REMOVE.jpg", &width, &height, &channels, 0);
+
+    if(img == NULL)
+    {
+        printf("error reading files");
+        exit(1);
     }
 
-    free(permutation);
+    size_t img_size = Height * Width * channels;
+    int new_channels = channels;
+    size_t new_size = Width * Height * new_channels;
+
+    unsigned char *newimg = malloc(new_size);
+    if(newimg == NULL)
+    {
+        printf("error allocating memory");
+        exit(1);
+    }
+
+    int x = 0, y = 0;
+    for(unsigned char *p = img, *n = newimg; p!= img + img_size; p+=channels, n+=new_channels)
+    {
+        if(x == Width)
+        {
+            x = 0;
+            y++;
+        }
+
+        *(n) = (uint8_t)(*(p)*0.0 + Numbers[y][x]);
+        *(n+1) = (uint8_t)(*(p+1)*0.0 + Numbers[y][x]);
+        *(n+2) = (uint8_t)(*(p+2)*0.0 + Numbers[y][x]);
+
+        /*if(Numbers[y][x] >= 180)
+        {
+            *(n) = (uint8_t)(*(p)*0.0 + Numbers[y][x]);
+            *(n+1) = (uint8_t)(*(p+1)*0.0 + Numbers[y][x]);
+            *(n+2) = (uint8_t)(*(p+2)*0.0 + Numbers[y][x]);
+        }
+        else if(Numbers[y][x] > 100)
+            *(n+1) = (uint8_t)(*(p+1)*0.0 + Numbers[y][x] - 30.0);
+        else if(Numbers[y][x] <= 100)
+            *(n+2) = (uint8_t)(*(p+2)*0.0 + Numbers[y][x] + 30.0);*/
+        if(channels == 4) {
+            *(n+1) = *(p+3);
+        }
+        x++;
+    }
+
+    stbi_write_jpg("test.jpg", Width, Height, new_channels, newimg, 100);
+
+    stbi_image_free(img);
+    stbi_image_free(newimg);
 }
 
-int generate(int octaves, int i, int j)
+int generate(int i, int j)
 {
     float result = 0.0;
-
+    int octaves = 4;
     float frequency = 0.01;
     float amplitude = 0.7;
 
@@ -76,8 +136,8 @@ float Perlin(float x, float y)
     int Base_x = floor(x);
     int Base_y = floor(y);
 
-    float Point_x = x - (float)Base_x;
-    float Point_y = y - (float)Base_y;
+    float Point_x = x - floor(x);
+    float Point_y = y - floor(y);
 
     Base_x = Base_x & 255;
     Base_y = Base_y & 255;
@@ -89,32 +149,46 @@ float Perlin(float x, float y)
     float Fade_x = Fade(Point_x);
     float Fade_y = Fade(Point_y);
 
-
     // 0 - top right   1 - top left    2 - bottom right    3 - bottom left
-    float a = Lerp(Cell[3].dot_prouct, Cell[1].dot_prouct, Fade_y);
+    float a = Lerp(Cell[3].dot_prouct, Cell[1].dot_prouct,  Fade_y);
     float b = Lerp(Cell[2].dot_prouct, Cell[0].dot_prouct, Fade_y);
 
-    return (Lerp(a, b, Fade_x) + 1)/2;
+    return (Lerp(a, b, Fade_x) + 1.0)/2.0;
 }
 
 void assign_vector_values(struct vector temp[], float Point_x, float Point_y, int Base_x, int Base_y)
 {
+    temp[0].distance_vector_x = Point_x -1.0;
+    temp[0].distance_vector_y = Point_y -1.0;
+    temp[0].permutation_value = permutation[permutation[Base_x + 1] + Base_y + 1];
+
+    temp[1].distance_vector_x = Point_x;
+    temp[1].distance_vector_y = Point_y - 1.0;
+    temp[1].permutation_value = permutation[permutation[Base_x] + Base_y + 1];
+
+    temp[2].distance_vector_x = Point_x - 1.0;
+    temp[2].distance_vector_y = Point_y; 
+    temp[2].permutation_value = permutation[permutation[Base_x + 1] + Base_y];
+
+    temp[3].distance_vector_x = Point_x;
+    temp[3].distance_vector_y = Point_y;
+    temp[3].permutation_value = permutation[permutation[Base_x] + Base_y];
+
     // Iteration:   0 - top right   1 - top left    2 - bottom right    3 - bottom left
     for(int i = 0; i < 4; i++)
     {
-        temp[i].distance_vector_x = Point_x - ((i+1) & 1); // minus one for i = 0 and 2
-        temp[i].distance_vector_y = Point_y - (i > 1 ? 0:1); // minus one for i = 0 and 1 
+        int rest = temp[i].permutation_value % 4;
+        if(rest == 0)
+            temp[i].dot_prouct =  temp[i].distance_vector_x + temp[i].distance_vector_y;
 
-        temp[i].permutation_value = permutation[permutation[Base_x + ((i+1) & 1)] + Base_y + (i > 1 ? 0:1)]; // the hash function
+        if(rest == 1)
+            temp[i].dot_prouct =  (-1.0 * temp[i].distance_vector_x) + temp[i].distance_vector_y;
 
-        int rest= temp[i].permutation_value % 4;
+        if(rest == 2)
+            temp[i].dot_prouct =  (-1.0 * temp[i].distance_vector_x) + -1.0 * (temp[i].distance_vector_y);
 
-        temp[i].gradient_vector_x = (rest > 1)? -1.0:1.0; // -1 for rest = 2 and 3
-        temp[i].gradient_vector_y = (rest % 2 == 0)? -1.0:1.0; // -1 for rest = 0 and 2
-
-        temp[i].dot_prouct = temp[i].distance_vector_x * temp[i].gradient_vector_x + temp[i].distance_vector_y * temp[i].gradient_vector_y;
-        
-        //printf("%f, %f, %d, %f\n", temp[i].distance_vector_x, temp[i].distance_vector_y, temp[i].permutation_value, temp[i].dot_prouct);
+        if(rest == 3)
+            temp[i].dot_prouct =  temp[i].distance_vector_x + (-1.0 * temp[i].distance_vector_y);
     }
 }
 
@@ -155,7 +229,7 @@ void swap(int *table, int i, int j)
 
 float Fade(float t)
 {
-    return t * t * t *(t * (t * 5.0 - 15.0) + 10.0);
+    return t * t * t *(t * (t * 6.0 - 15.0) + 10.0);
 }
 
 float Lerp(float a, float b, float t)
