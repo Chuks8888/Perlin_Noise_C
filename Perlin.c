@@ -17,6 +17,19 @@
 #define freq    0.01 // frequency
 #define octav   4    // octaves
 #define ampli   0.7  // amplitude
+/*
+    The number of octaves defines
+    how many time the function Perlin is 
+    used (lets call it smoothness)
+
+    The frequency will influence how often 
+    the grid points change
+
+    The amplitude will only change the 
+    result that we need in this case 
+    its 1.0 because we need values
+    between 0 and 255 because of RGB
+*/
 
 // Structure for a single vector
 struct vector
@@ -114,18 +127,6 @@ int main()
     Function generate is the one 
     responsible for all the controls
     that are defined above
-
-    The number of octaves defines
-    how many time the function Perlin is 
-    used
-
-    The frequency will influence how often 
-    the grid points change
-
-    The amplitude will only change the 
-    result that we need in this case 
-    its 1.0 because we need values
-    between 0 and 255 because of RGB
 */
 int generate(int i, int j)
 {
