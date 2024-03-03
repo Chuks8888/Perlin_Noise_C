@@ -9,54 +9,66 @@
 #define STB_IMAGE_WRITE_IMPLEMENTATION
 #include "stb_image/stb_image_write.h"
 
+// HERE ARE THE CONTROLS
+// MAX HEIGHT AND WIDTH I TRIED
+// AND WORKED WAS 700 ON 700
+#define Height  500
+#define Width   500
+#define freq    0.01 // frequency
+#define octav   4    // octaves
+#define ampli   0.7  // amplitude
+
+// Structure for a single vector
 struct vector
 {
+    // vectors to the current 
+    // point in a cell
     float distance_vector_x;
     float distance_vector_y;
 
+    // the permutation value of the
+    // grid point
     int permutation_value;
 
-    //float gradient_vector_x;
-    //float gradient_vector_y;
-
+    // dot product of distance vector
+    // and the constant vector
     float dot_prouct;
 };
 
-void swap(int *table, int i, int j);
+// Decrlaration of functions
 int* Permutation_maker();
 void assign_vector_values(struct vector temp[], float Point_x, float Point_y, int Base_x, int Base_y);
 float Perlin(float x, float y);
 float Fade(float t);
 float Lerp(float a, float b, float t);
 int generate(int i, int j);
+// End of decrlaration of functions
 
 int *permutation; // declare a global permutation array
 
-#define Height  500
-#define Width   500
 int main()
 {
-    //srand(time(NULL));
-
     permutation = Permutation_maker(); // define of the global array
 
     int Numbers[Height][Width];
 
-    // FILE *save = fopen("Perlin_noise.txt", "w");
+    FILE *save = fopen("Perlin_noise.txt", "w");
+
+    for(int i = 0; i < Height; i++)
+        for(int j = 0; j < Width; j++)
+            Numbers[i][j] = generate(j, i);
 
     for(int i = 0; i < Height; i++)
     {
         for(int j = 0; j < Width; j++)
         {
-            Numbers[i][j] = generate(j, i);
-            //fprintf(save, "%d ", Numbers[i][j]);
-            if(Numbers[i][j] < 0) Numbers[i][j] = 0;
             if(Numbers[i][j] > 255) Numbers[i][j] = 255;
+            fprintf(save, "%d ", Numbers[i][j]);
         }
-        //fprintf(save, "\n");
+        fprintf(save, "\n");
     }
     free(permutation);
-    // fclose(save);
+    fclose(save);
 
     int width, height, channels;
     unsigned char *img = stbi_load("DO_NOT_REMOVE.jpg", &width, &height, &channels, 0);
@@ -87,38 +99,40 @@ int main()
             y++;
         }
 
-        *(n) = (uint8_t)(*(p)*0.0 + Numbers[y][x]);
-        *(n+1) = (uint8_t)(*(p+1)*0.0 + Numbers[y][x]);
-        *(n+2) = (uint8_t)(*(p+2)*0.0 + Numbers[y][x]);
+        *(n+2) = *(n+1) = *(n) = (uint8_t)(*(p)*0.0 + Numbers[y][x]);
 
-        /*if(Numbers[y][x] >= 180)
-        {
-            *(n) = (uint8_t)(*(p)*0.0 + Numbers[y][x]);
-            *(n+1) = (uint8_t)(*(p+1)*0.0 + Numbers[y][x]);
-            *(n+2) = (uint8_t)(*(p+2)*0.0 + Numbers[y][x]);
-        }
-        else if(Numbers[y][x] > 100)
-            *(n+1) = (uint8_t)(*(p+1)*0.0 + Numbers[y][x] - 30.0);
-        else if(Numbers[y][x] <= 100)
-            *(n+2) = (uint8_t)(*(p+2)*0.0 + Numbers[y][x] + 30.0);*/
-        if(channels == 4) {
-            *(n+1) = *(p+3);
-        }
         x++;
     }
 
-    stbi_write_jpg("test.jpg", Width, Height, new_channels, newimg, 100);
+    stbi_write_jpg("Perlin_noise.jpg", Width, Height, new_channels, newimg, 100);
 
     stbi_image_free(img);
     stbi_image_free(newimg);
 }
 
+/*
+    Function generate is the one 
+    responsible for all the controls
+    that are defined above
+
+    The number of octaves defines
+    how many time the function Perlin is 
+    used
+
+    The frequency will influence how often 
+    the grid points change
+
+    The amplitude will only change the 
+    result that we need in this case 
+    its 1.0 because we need values
+    between 0 and 255 because of RGB
+*/
 int generate(int i, int j)
 {
     float result = 0.0;
-    int octaves = 8;
-    float frequency = 0.01;
-    float amplitude = 0.7;
+    int octaves = octav;
+    float frequency = freq;
+    float amplitude = ampli;
 
     for (int o = 0 ; o < octaves; o++)
     {
@@ -159,6 +173,7 @@ float Perlin(float x, float y)
 void assign_vector_values(struct vector temp[], float Point_x, float Point_y, int Base_x, int Base_y)
 {
     // Iteration:   0 - top right   1 - top left    2 - bottom right    3 - bottom left
+
     for(int i = 0; i < 4; i++)
     {
         temp[i].distance_vector_x = Point_x - ((i+1) & 1); // for 0 and 2
@@ -167,6 +182,7 @@ void assign_vector_values(struct vector temp[], float Point_x, float Point_y, in
 
         int rest = temp[i].permutation_value & 3;
         temp[i].dot_prouct = (-1.0 * (-1.0 + (rest&2)))*temp[i].distance_vector_x + (-1.0 + 2*((rest+1) & 1))*temp[i].distance_vector_y;
+        // 1, 1 for i = 0;  1, -1 for i = 1;    -1, 1 for i = 2;    -1, -1 for i = 3
     }
 }
 
@@ -201,7 +217,7 @@ int* Permutation_maker() // function for creating permutation array
 }
 
 float Fade(float t){
-    return t * t * t *(t * (t * 6.0 - 15.0) + 10.0);
+    return t * t * t *(t * (t * 6 - 15) + 10);
 }
 
 float Lerp(float a, float b, float t){
