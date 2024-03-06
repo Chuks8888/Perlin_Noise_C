@@ -10,4 +10,4 @@ what do those controls do.
 
 maximum Width and Height
 controls is 1920 and 1080, the program will most likely recieve
-Segmenation fault
+Segmenation fault if those controls exceed those values
