@@ -7,6 +7,7 @@ There in the lines 16 - 20 you have definitions which you can
 control
 You can also find next to those liens some simple explanations on
 what do those controls do.
-If you want to make the JPG the maximum Width and Height
-controls is 1920 and 1080, the program will not create an image
-if even one of those numbers is too big
+
+maximum Width and Height
+controls is 1920 and 1080, the program will most likely recieve
+Segmenation fault
