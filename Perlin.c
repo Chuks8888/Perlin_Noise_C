@@ -15,9 +15,10 @@
 // 1080 x 1920
 #define Height  1080
 #define Width   1920
-#define freq    0.005 // frequency
-#define octav   8    // octaves
-#define ampli   0.7  // amplitude
+#define freq    0.0015 // frequency
+#define octav   6    // octaves
+#define ampli   0.69  // amplitude
+#define color   1     // color 1 or 0
 /*
     The number of octaves defines
     how many time the function Perlin is 
@@ -32,6 +33,11 @@
     between 0 and 255 because of RGB
 	if we were to lower it, the noise
 	would be a lot darker
+
+	Color defines if we want our nosie to 
+	coloful or balck or white
+	The controls for the color appearance is 
+	IN MAIN
 */
 
 // Structure for a single vector
@@ -82,7 +88,7 @@ int main()
     {
         for(int j = 0; j < Width; j++)
         {
-            if(Numbers[i][j] > 255) Numbers[i][j] = 255;
+            /*if(Numbers[i][j] > 255) Numbers[i][j] = 255;*/
             fprintf(save, "%d ", Numbers[i][j]);
         }
         fprintf(save, "\n");
@@ -108,7 +114,7 @@ int main()
 
 	// calculating image sizes
 	size_t img_size = Height * Width * channels;
-	int new_channels = channels == 4 ? 2:1;
+	int new_channels = channels/* == 4 ? 2:1*/;
 	size_t new_size = Width * Height * new_channels;
 
 	// allocating memory for new picture
@@ -122,15 +128,50 @@ int main()
 	// Loop for manipulating pixel data that is stored
 	// in a pointer to the new image
 	int x = 0, y = 0;
+	int r = 1, b = 1, g = 1; // RGB
 	for(unsigned char *p = img, *n = newimg; p!= img + img_size; p+=channels, n+=new_channels)
 	{
+		if(color == 1)
+		{
+			// CONTROLS FOR COLOR
+			// the curent settings 
+			// are custom for maps
+			// feel free to modify
+			// for your vision
+			if(Numbers[y][x] <= 145)
+			{
+				r = 0;
+				g = 0;
+				b = 1;
+				Numbers[y][x] += 10;
+			}
+			else if(Numbers[y][x] > 145 && Numbers[y][x] <=225)
+			{
+				r = 0;
+				g = 1;
+				b = 0;
+				Numbers[y][x] = (225 - 145) + (225 - Numbers[y][x]) ;
+			}
+			
+			else if(Numbers[y][x] > 225)
+			{
+				r = 1;
+				g = 1;
+				b = 1;
+				Numbers[y][x] -= 169;
+			}
+		}
+
 		if(x == Width)
 		{
 			x = 0;
 			y++;
 		}
 
-		*(n) = (uint8_t)(*(p)*0.0 + Numbers[y][x]);
+		*(n) = (uint8_t)(*(p)*0.0 + (Numbers[y][x]*r)); // RED MASK
+		*(n+1) = (uint8_t)(*(p)*0.0 + (Numbers[y][x])*g); // GREEN MASK
+		*(n+2) = (uint8_t)(*(p)*0.0 + (Numbers[y][x])*b); // BLUE MASK
+
 		if(new_channels == 2)
 		{
 			*(n+1) = (uint8_t)(*(p+3));
@@ -141,7 +182,6 @@ int main()
 
 	// writing the image and then freeing the memory
 	stbi_write_jpg("Perlin_noise.jpg", Width, Height, new_channels, newimg, 100);
-
 	stbi_image_free(img);
 	stbi_image_free(newimg);
 }
@@ -223,6 +263,7 @@ void assign_vector_values(struct vector temp[], float Point_x, float Point_y, in
 
 int* Permutation_maker() // function for creating permutation array
 {
+	srand(time(NULL));
     // declaring the array and initialize memory
     int *Permutation = malloc(2 * 256 * sizeof(int)); 
 
