@@ -11,3 +11,6 @@ what do those controls do.
 maximum Width and Height
 controls is 1920 and 1080 respectively, the program will most likely recieve
 Segmenation fault if those controls exceed those values
+
+Update: 
+I recently tried to turn it on on Windows 11 using mingw32, there was a problem with the make file where I had to change the -std=17 to -std=11 and then it worked
