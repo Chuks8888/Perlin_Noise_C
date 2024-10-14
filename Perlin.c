@@ -16,7 +16,7 @@
 #define Height  1080
 #define Width   1920
 #define freq    0.0015 // frequency
-#define octav   6    // octaves
+#define octav   8    // octaves
 #define ampli   0.69  // amplitude
 #define color   1     // color 1 or 0
 /*
@@ -70,13 +70,19 @@ int *permutation; // declare a global permutation array
 
 int main()
 {
+    //fprintf(stderr, "This is an error message!\n");
     permutation = Permutation_maker(); // define of the global array
 
     int Numbers[Height][Width]; 
-	// Numbers got from
-	// the algorithm
+	// Numbers got from the algorithm
 
     FILE *save = fopen("Perlin_noise.txt", "w");
+
+    if (save == NULL) {
+    fprintf(stderr, "Error opening file for writing!\n");
+    exit(1);
+    }
+    
 	// File for saving the numbers 
 
     for(int i = 0; i < Height; i++)
@@ -99,7 +105,7 @@ int main()
     free(permutation);
     fclose(save);
 	// freeing memory
-
+    
 	// geting data from a blank jpg, this is used
 	// so that we manipulate the pixels and create
 	// a new picture. That is our Perlin noise
@@ -265,7 +271,12 @@ int* Permutation_maker() // function for creating permutation array
 {
 	srand(time(NULL));
     // declaring the array and initialize memory
-    int *Permutation = malloc(2 * 256 * sizeof(int)); 
+    int *Permutation = malloc(2 * 256 * sizeof(int));
+
+    if (Permutation == NULL) {
+    fprintf(stderr, "Memory allocation for permutation array failed!\n");
+    exit(1);
+    } 
 
     // filling array
     for(int i = 0; i < 256; i++)
