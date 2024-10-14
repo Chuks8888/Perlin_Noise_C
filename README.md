@@ -12,5 +12,13 @@ maximum Width and Height
 controls is 1920 and 1080 respectively, the program will most likely recieve
 Segmenation fault if those controls exceed those values
 
-Update: 
-I recently tried to turn it on on Windows 11 using mingw32, there was a problem with the make file where I had to change the -std=17 to -std=11 and then it worked
+Preview image for parameters:
+#define Height  1080
+#define Width   1920
+#define freq    0.0015 // frequency
+#define octav   8    // octaves
+#define ampli   0.69  // amplitude
+#define color   1     // color 1 or 0
+![image](https://github.com/user-attachments/assets/8e6d71cd-e9e9-4c15-81c2-7f950d2b73d3)
+
+
